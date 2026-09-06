@@ -1,5 +1,6 @@
 # Local .terraform directories
 .terraform/
+.terraform.lock.hcl
 
 # .tfstate files
 *.tfstate
@@ -42,3 +43,15 @@ terraform.rc
 # Optional: ignore plan files saved before destroying Terraform configuration
 # Uncomment the line below if you want to ignore planout files.
 # planout
+
+# Secrets
+.session-outputs.env
+.kubeconfig
+
+# OS files
+.DS_Store
+*.swp
+
+# Node
+node_modules/
+dist/
