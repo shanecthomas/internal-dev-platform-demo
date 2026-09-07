@@ -21,7 +21,7 @@ cd ../../crossplane && ./apply.sh
 | `install/02-providers.yaml` | The `Provider` CR for `provider-azure-storage`, and the `Function` CR for `function-patch-and-transform` (used by the Composition's pipeline). |
 | `install/03-provider-config.yaml` | `ProviderConfig` with `credentials.source: OIDCTokenFile` - exchanges the token Kubernetes projects into the pod (because of the workload-identity ServiceAccount) for an Azure AD token. No client secret exists anywhere in this chain. |
 | `xrd/definition.yaml` | The `XStorageAccount` XRD - v2-native (`apiextensions.crossplane.io/v2`, `scope: Namespaced`), no Claim indirection, since Backstage's own service account is the only caller and never needs the Claim's cross-namespace proxy trick. Schema: `name` (pattern-validated against real Azure storage account naming rules), `location`, `sku`. `resourceGroupName` is deliberately not a field here. |
-| `xrd/composition.yaml` | Pipeline-mode `Composition` (via `function-patch-and-transform`) that turns an `XStorageAccount` into a real `storage.azure.upbound.io` `Account`, landing it in the one pre-scoped resource group from Terraform - hardcoded in this file, not passed through from the XR's spec. |
+| `xrd/composition.yaml` | Pipeline-mode `Composition` (via `function-patch-and-transform`) that turns an `XStorageAccount` into a real `storage.azure.m.upbound.io` `Account` (the namespaced API group - required since our XR is namespaced), landing it in the one pre-scoped resource group from Terraform - hardcoded in this file, not passed through from the XR's spec. |
 
 ## Why the resource group is hardcoded, not a claim field
 

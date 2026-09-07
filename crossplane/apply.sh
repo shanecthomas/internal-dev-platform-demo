@@ -18,8 +18,14 @@ if [[ ! -f "${SESSION_OUTPUTS}" ]]; then
   exit 1
 fi
 
+# set -a makes every variable sourced below exported automatically. Without
+# this, `source` only makes AZURE_CLIENT_ID etc. visible inside this script -
+# envsubst is a separate process and can't see un-exported shell variables,
+# so it would silently substitute them with empty strings instead of erroring.
+set -a
 # shellcheck disable=SC1090
 source "${SESSION_OUTPUTS}"
+set +a
 
 for var in AZURE_CLIENT_ID AZURE_TENANT_ID AZURE_SUBSCRIPTION_ID WORKLOAD_RESOURCE_GROUP; do
   if [[ -z "${!var:-}" ]]; then

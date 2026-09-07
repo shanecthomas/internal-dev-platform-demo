@@ -16,7 +16,7 @@ a large half-finished platform.
 - [x] **Foundation infrastructure** — ephemeral AKS cluster with OIDC
       workload identity, a scoped resource group, and a least-privilege
       Azure AD app for Crossplane. See [`terraform/foundation/`](./terraform/foundation).
-- [ ] **Crossplane** — `provider-family-azure`, an `XStorageAccount` XRD,
+- [x] **Crossplane** — `provider-family-azure`, an `XStorageAccount` XRD,
       and a Pipeline-mode Composition (`function-patch-and-transform`)
       that provisions a Storage Account into the scoped resource group.
 - [ ] **Backstage scaffolder template** — a form (name/location/sku) that

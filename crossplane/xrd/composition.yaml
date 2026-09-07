@@ -1,5 +1,17 @@
 # ${WORKLOAD_RESOURCE_GROUP} is substituted at apply time from Terraform's
 # output - hardcoded into the Composition, never a claim-supplied field.
+#
+# apiVersion is storage.azure.M.upbound.io (not storage.azure.upbound.io) -
+# note the .m. infix. provider-upjet-azure v2.x ships every managed
+# resource kind twice: <group>.azure.upbound.io is the legacy
+# CLUSTER-SCOPED version, <group>.azure.M.upbound.io is the NAMESPACED
+# version. Since our XRD is v2-native (scope: Namespaced), it can only
+# compose namespaced resources - Kubernetes doesn't allow a namespaced
+# object to own a cluster-scoped one via ownerReferences, so Crossplane
+# rejects the cluster-scoped kind outright with "cannot apply cluster
+# scoped composed resource ... for a namespaced composite resource."
+# Crossplane propagates the XR's own namespace onto the composed resource
+# automatically - no explicit metadata.namespace patch needed here.
 apiVersion: apiextensions.crossplane.io/v1
 kind: Composition
 metadata:
@@ -19,7 +31,7 @@ spec:
         resources:
           - name: storage-account
             base:
-              apiVersion: storage.azure.upbound.io/v1beta1
+              apiVersion: storage.azure.m.upbound.io/v1beta1
               kind: Account
               spec:
                 forProvider:
@@ -28,9 +40,10 @@ spec:
                   accountReplicationType: LRS
                   minTlsVersion: "TLS1_2"
                   allowNestedItemsToBePublic: false
-                  enableHttpsTrafficOnly: true
+                  httpsTrafficOnlyEnabled: true
                 providerConfigRef:
                   name: default
+                  kind: ClusterProviderConfig
             patches:
               - type: FromCompositeFieldPath
                 fromFieldPath: spec.name
