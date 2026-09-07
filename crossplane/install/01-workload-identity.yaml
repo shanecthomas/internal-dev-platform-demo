@@ -1,0 +1,65 @@
+# Wires Azure Workload Identity onto EVERY Azure family provider pod -
+# whether it's one we install explicitly (provider-azure-storage) or one
+# Crossplane auto-installs as a dependency (provider-family-azure itself).
+#
+# Why this two-object shape, and not just a runtimeConfigRef on the
+# Provider we install: for a while, family-provider dependencies that got
+# auto-installed did NOT inherit the runtimeConfigRef set on the provider
+# that pulled them in (crossplane-contrib/provider-upjet-azure#665) - so
+# you could wire identity perfectly on provider-azure-storage and the
+# auto-installed provider-family-azure pod would still have none, and
+# silently fail to auth. ImageConfig sidesteps this entirely: it matches
+# on image name prefix, so it applies to any Azure family image regardless
+# of how it got installed.
+#
+# ${AZURE_CLIENT_ID} / ${AZURE_TENANT_ID} come from terraform/foundation's
+# outputs (see ../apply.sh) - substituted at apply time, never hardcoded.
+
+apiVersion: pkg.crossplane.io/v1beta1
+kind: ImageConfig
+metadata:
+  name: azure-workload-identity
+spec:
+  matchImages:
+    - prefix: xpkg.upbound.io/upbound/provider-azure-
+    - prefix: xpkg.upbound.io/upbound/provider-family-azure
+  runtime:
+    configRef:
+      name: azure-workload-identity
+---
+apiVersion: pkg.crossplane.io/v1beta1
+kind: DeploymentRuntimeConfig
+metadata:
+  name: azure-workload-identity
+spec:
+  # Crossplane generates the ServiceAccount for us from this template,
+  # rather than us hand-writing a separate ServiceAccount manifest and
+  # hoping the name matches what the Provider expects.
+  #
+  # The name is pinned (not left to default) because Terraform's federated
+  # identity credential trusts one exact subject:
+  #   system:serviceaccount:crossplane-system:provider-family-azure
+  # (see terraform/foundation/variables.tf: crossplane_service_account_name).
+  # Both the family provider AND provider-azure-storage use this same
+  # DeploymentRuntimeConfig via the ImageConfig match above, so they share
+  # this one ServiceAccount/identity rather than each getting their own
+  # (which the federated credential wouldn't recognize).
+  serviceAccountTemplate:
+    metadata:
+      name: provider-family-azure
+      annotations:
+        azure.workload.identity/client-id: "${AZURE_CLIENT_ID}"
+        azure.workload.identity/tenant-id: "${AZURE_TENANT_ID}"
+  deploymentTemplate:
+    metadata:
+      labels:
+        azure.workload.identity/use: "true"
+    spec:
+      selector: {}
+      template:
+        metadata:
+          labels:
+            azure.workload.identity/use: "true"
+        spec:
+          containers:
+            - name: package-runtime

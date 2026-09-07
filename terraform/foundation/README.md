@@ -69,6 +69,15 @@ export KUBECONFIG="$(pwd)/.kubeconfig"
 kubectl get nodes   # sanity check
 ```
 
+Then install Crossplane onto the cluster:
+
+```bash
+../../crossplane/apply.sh
+```
+
+See [`../../crossplane/README.md`](../../crossplane/README.md) for what
+that installs and why.
+
 When you're done for the session:
 
 ```bash
@@ -87,6 +96,7 @@ isn't set, both will prompt for it interactively.
 | `oidc_issuer_url` | Debugging federation issues; not usually needed manually |
 | `workload_resource_group_name` | The one resource group Crossplane can provision into |
 | `kube_config_raw` | Written to `.kubeconfig` by `tfup.sh` — sensitive, never commit |
+| `subscription_id` | Crossplane `ProviderConfig` — Azure subscription ID |
 
 ## Security notes
 

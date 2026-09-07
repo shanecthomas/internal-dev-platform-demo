@@ -1,0 +1,24 @@
+# We only install provider-azure-storage explicitly - not the full
+# provider-family-azure. Crossplane auto-installs the family provider as
+# a dependency (it owns the shared ProviderConfig CRD), so we end up with
+# exactly two provider pods instead of the whole Azure surface area.
+#
+# Version pinned to the latest v2.x release as of this writing - bump
+# deliberately, not by tracking a floating tag.
+apiVersion: pkg.crossplane.io/v1
+kind: Provider
+metadata:
+  name: provider-azure-storage
+spec:
+  package: xpkg.upbound.io/upbound/provider-azure-storage:v2.7.0
+---
+# function-patch-and-transform: the Composition below runs in Pipeline
+# mode and calls out to this function to do the actual patch/transform
+# work, rather than using the older (and now legacy) resources-array
+# Composition style.
+apiVersion: pkg.crossplane.io/v1
+kind: Function
+metadata:
+  name: function-patch-and-transform
+spec:
+  package: xpkg.upbound.io/crossplane-contrib/function-patch-and-transform:v0.8.2

@@ -25,3 +25,8 @@ output "workload_resource_group_name" {
   description = "The single resource group Crossplane is permitted to provision Storage Accounts into."
   value       = azurerm_resource_group.workloads.name
 }
+
+output "subscription_id" {
+  description = "Azure subscription ID - goes into the Crossplane ProviderConfig alongside clientID/tenantID."
+  value       = data.azurerm_client_config.current.subscription_id
+}

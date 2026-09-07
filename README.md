@@ -16,7 +16,7 @@ a large half-finished platform.
 - [x] **Foundation infrastructure** — ephemeral AKS cluster with OIDC
       workload identity, a scoped resource group, and a least-privilege
       Azure AD app for Crossplane. See [`terraform/foundation/`](./terraform/foundation).
-- [ ] **Crossplane** — `provider-family-azure`, an `XStorageAccount` XRD,
+- [x] **Crossplane** — `provider-family-azure`, an `XStorageAccount` XRD,
       and a Pipeline-mode Composition (`function-patch-and-transform`)
       that provisions a Storage Account into the scoped resource group.
 - [ ] **Backstage scaffolder template** — a form (name/location/sku) that
@@ -53,7 +53,7 @@ a large half-finished platform.
 internal-dev-platform-demo/
 ├── terraform/
 │   └── foundation/       # AKS + OIDC workload identity + scoped RG
-├── crossplane/           # XRD, Composition, ProviderConfig (in progress)
+├── crossplane/           # XRD, Composition, ProviderConfig
 ├── backstage/            # scaffolder template + skeleton (in progress)
 └── docs/
     └── architecture.md
@@ -61,8 +61,10 @@ internal-dev-platform-demo/
 
 ## Getting started
 
-See [`terraform/foundation/README.md`](./terraform/foundation/README.md)
-for prerequisites, setup, and day-to-day usage (`tfup.sh` / `tfdown.sh`).
+1. [`terraform/foundation/README.md`](./terraform/foundation/README.md) —
+   prerequisites, setup, and day-to-day usage (`tfup.sh` / `tfdown.sh`)
+2. [`crossplane/README.md`](./crossplane/README.md) — installing
+   Crossplane and the Storage Account XRD onto the cluster from step 1
 
 ## Cost
 

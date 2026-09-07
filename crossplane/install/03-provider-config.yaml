@@ -1,0 +1,27 @@
+# credentials.source: OIDCTokenFile means "exchange the token Kubernetes
+# projected into this pod (because of the ServiceAccount's workload-identity
+# annotations) for an Azure AD token" - the same OIDC federation pattern as
+# gitops-helm-argocd-demo, just with a Crossplane provider pod as the caller
+# instead of a GitHub Actions runner. No client secret exists anywhere in
+# this chain.
+#
+# apiVersion is azure.M.upbound.io (not azure.upbound.io) and kind is
+# ClusterProviderConfig (not ProviderConfig): our managed resources are now
+# in the namespaced storage.azure.m.upbound.io group, and Crossplane v2
+# requires a matching config from that same .m. group. ClusterProviderConfig
+# applies across every namespace - one shared identity for everything, same
+# intent as the single ProviderConfig we started with, just under the v2
+# namespaced-resource API. The namespaced ProviderConfig kind also exists
+# (one config per namespace) but isn't needed here: Backstage is the only
+# caller and every claim uses the same Crossplane identity regardless of
+# which namespace it lands in.
+apiVersion: azure.m.upbound.io/v1beta1
+kind: ClusterProviderConfig
+metadata:
+  name: default
+spec:
+  subscriptionID: "${AZURE_SUBSCRIPTION_ID}"
+  tenantID: "${AZURE_TENANT_ID}"
+  clientID: "${AZURE_CLIENT_ID}"
+  credentials:
+    source: OIDCTokenFile
