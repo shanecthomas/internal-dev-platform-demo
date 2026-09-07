@@ -69,11 +69,11 @@ kubectl apply -f "${SCRIPT_DIR}/xrd/definition.yaml" || exit 1
 render "${SCRIPT_DIR}/xrd/composition.yaml" | kubectl apply -f - || exit 1
 
 echo ""
-echo "Done. Try a claim, e.g.:"
+echo "Done. Try it, e.g.:"
 echo "  kubectl create namespace demo"
 echo "  cat <<EOF | kubectl apply -f -"
 echo "  apiVersion: storage.idp-demo.io/v1alpha1"
-echo "  kind: StorageAccountClaim"
+echo "  kind: XStorageAccount"
 echo "  metadata:"
 echo "    name: my-test-storage"
 echo "    namespace: demo"

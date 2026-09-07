@@ -1,25 +1,32 @@
 # This is the "API" Backstage's scaffolder template will eventually target:
-# a developer's form submission becomes a claim shaped like this.
+# a developer's form submission becomes an XStorageAccount, applied
+# directly into a namespace via Roadie's kubernetes:apply action.
 #
-# Deliberately NOT exposed here: resourceGroupName. Every claim lands in
-# the one pre-scoped resource group from terraform/foundation, hardcoded
-# in the Composition below - not passed through from the claim. Creating
-# a resource group is subscription-level in Azure, so letting claims
+# v2-native (apiextensions.crossplane.io/v2, scope: Namespaced), not the
+# legacy Claim pattern: Claims exist to let a developer WITHOUT
+# cluster-scoped RBAC safely request a cluster-scoped resource from their
+# own namespace, via a namespaced proxy object. Nothing here ever gives a
+# developer direct cluster API access - Backstage's own service account is
+# the only caller, using its own credentials - so the problem Claims solve
+# doesn't exist in this design. One object type instead of two.
+#
+# Deliberately NOT exposed here: resourceGroupName. Every XR lands in the
+# one pre-scoped resource group from terraform/foundation, hardcoded in
+# the Composition below - not passed through from the XR's spec. Creating
+# a resource group is subscription-level in Azure, so letting callers
 # choose (or create) one would require broader-than-scoped permissions.
 # Fixing it in the Composition keeps blast radius constant no matter what
 # a future Backstage form passes through.
-apiVersion: apiextensions.crossplane.io/v1
+apiVersion: apiextensions.crossplane.io/v2
 kind: CompositeResourceDefinition
 metadata:
   name: xstorageaccounts.storage.idp-demo.io
 spec:
+  scope: Namespaced
   group: storage.idp-demo.io
   names:
     kind: XStorageAccount
     plural: xstorageaccounts
-  claimNames:
-    kind: StorageAccountClaim
-    plural: storageaccountclaims
   versions:
     - name: v1alpha1
       served: true
@@ -33,7 +40,10 @@ spec:
               properties:
                 name:
                   type: string
-                  description: Azure storage account name (lowercase, 3-24 chars, no hyphens).
+                  description: >-
+                    Azure storage account name: lowercase letters and
+                    numbers only, 3-24 characters, no hyphens.
+                  pattern: "^[a-z0-9]{3,24}$"
                 location:
                   type: string
                   description: Azure region.
