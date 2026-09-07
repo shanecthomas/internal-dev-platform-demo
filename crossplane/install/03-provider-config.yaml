@@ -1,0 +1,13 @@
+# credentials.source: OIDCTokenFile means "exchange the token Kubernetes
+# projected into this pod (because of the ServiceAccount's workload-identity
+# annotations) for an Azure AD token". No client secret exists anywhere in this chain.
+apiVersion: azure.upbound.io/v1beta1
+kind: ProviderConfig
+metadata:
+  name: default
+spec:
+  subscriptionID: "${AZURE_SUBSCRIPTION_ID}"
+  tenantID: "${AZURE_TENANT_ID}"
+  clientID: "${AZURE_CLIENT_ID}"
+  credentials:
+    source: OIDCTokenFile

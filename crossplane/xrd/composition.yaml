@@ -1,0 +1,46 @@
+# ${WORKLOAD_RESOURCE_GROUP} is substituted at apply time from Terraform's
+# output - hardcoded into the Composition, never a claim-supplied field.
+apiVersion: apiextensions.crossplane.io/v1
+kind: Composition
+metadata:
+  name: xstorageaccounts.storage.idp-demo.io
+spec:
+  compositeTypeRef:
+    apiVersion: storage.idp-demo.io/v1alpha1
+    kind: XStorageAccount
+  mode: Pipeline
+  pipeline:
+    - step: patch-and-transform
+      functionRef:
+        name: function-patch-and-transform
+      input:
+        apiVersion: pt.fn.crossplane.io/v1beta1
+        kind: Resources
+        resources:
+          - name: storage-account
+            base:
+              apiVersion: storage.azure.upbound.io/v1beta1
+              kind: Account
+              spec:
+                forProvider:
+                  resourceGroupName: "${WORKLOAD_RESOURCE_GROUP}"
+                  accountKind: StorageV2
+                  accountReplicationType: LRS
+                  minTlsVersion: "TLS1_2"
+                  allowNestedItemsToBePublic: false
+                  enableHttpsTrafficOnly: true
+                providerConfigRef:
+                  name: default
+            patches:
+              - type: FromCompositeFieldPath
+                fromFieldPath: spec.name
+                toFieldPath: metadata.name
+              - type: FromCompositeFieldPath
+                fromFieldPath: spec.name
+                toFieldPath: metadata.annotations[crossplane.io/external-name]
+              - type: FromCompositeFieldPath
+                fromFieldPath: spec.location
+                toFieldPath: spec.forProvider.location
+              - type: FromCompositeFieldPath
+                fromFieldPath: spec.sku
+                toFieldPath: spec.forProvider.accountTier

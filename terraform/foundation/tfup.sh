@@ -61,6 +61,7 @@ get_and_write AZURE_CLIENT_ID      crossplane_client_id          "${OUTPUT_FILE}
 get_and_write AZURE_TENANT_ID      tenant_id                     "${OUTPUT_FILE}.tmp"
 get_and_write WORKLOAD_RESOURCE_GROUP workload_resource_group_name "${OUTPUT_FILE}.tmp"
 get_and_write OIDC_ISSUER_URL      oidc_issuer_url               "${OUTPUT_FILE}.tmp"
+get_and_write AZURE_SUBSCRIPTION_ID subscription_id               "${OUTPUT_FILE}.tmp"
 mv "${OUTPUT_FILE}.tmp" "${OUTPUT_FILE}"
 
 echo "==> Capturing kubeconfig"
