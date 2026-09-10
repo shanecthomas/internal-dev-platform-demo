@@ -19,9 +19,11 @@ a large half-finished platform.
 - [x] **Crossplane** — `provider-family-azure`, an `XStorageAccount` XRD,
       and a Pipeline-mode Composition (`function-patch-and-transform`)
       that provisions a Storage Account into the scoped resource group.
-- [ ] **Backstage scaffolder template** — a form (name/location/sku) that
-      renders a Crossplane claim and applies it directly to the cluster
-      via Roadie's `kubernetes:apply` scaffolder action.
+- [x] **Backstage scaffolder template** — a form (name/location/sku) that
+      renders an `XStorageAccount` manifest and applies it to the cluster
+      via a custom `kubernetes:apply` scaffolder action. See
+      [`backstage/`](./backstage) — including a note there on why that's a
+      small custom action rather than a third-party package.
 - [ ] **(Stretch) GitOps fast-follow** — swap direct `kubectl apply` for
       an ArgoCD-synced flow, reusing the pattern from
       [`gitops-helm-argocd-demo`](https://github.com/shanecthomas/gitops-helm-argocd-demo).
@@ -42,6 +44,15 @@ a large half-finished platform.
 - **Direct `kubectl apply` before GitOps.** The goal is one working
   end-to-end loop first; ArgoCD-backed GitOps is a clean fast-follow once
   the core loop is proven, not a prerequisite for it.
+- **A custom scaffolder action, not a third-party one.** There isn't
+  actually a well-maintained scaffolder action that applies an arbitrary
+  manifest for the current Backstage backend system — Roadie's real
+  Kubernetes module only creates namespaces, and the package that happens
+  to own the `kubernetes:apply` action ID is an unmaintained,
+  single-commit package written for a conference talk. `backstage/`
+  wraps the official `@kubernetes/client-node` library's own generic
+  apply API instead. Details in
+  [`backstage/plugins/scaffolder-backend-module-kubernetes-apply/README.md`](./backstage/plugins/scaffolder-backend-module-kubernetes-apply/README.md).
 - **Everything is ephemeral.** The AKS cluster (and the Azure AD app/
   federated credential tied to it) are created and destroyed per working
   session via `tfup.sh` / `tfdown.sh` — see the foundation README for details.
@@ -54,7 +65,8 @@ internal-dev-platform-demo/
 ├── terraform/
 │   └── foundation/       # AKS + OIDC workload identity + scoped RG
 ├── crossplane/           # XRD, Composition, ProviderConfig
-├── backstage/            # scaffolder template + skeleton (in progress)
+├── backstage/            # Backstage app + xstorageaccount template +
+│                         # the custom kubernetes:apply scaffolder action
 └── docs/
     └── architecture.md
 ```
@@ -65,6 +77,8 @@ internal-dev-platform-demo/
    prerequisites, setup, and day-to-day usage (`tfup.sh` / `tfdown.sh`)
 2. [`crossplane/README.md`](./crossplane/README.md) — installing
    Crossplane and the Storage Account XRD onto the cluster from step 1
+3. [`backstage/README.md`](./backstage/README.md) — running Backstage
+   against that cluster and submitting the form
 
 ## Cost
 
