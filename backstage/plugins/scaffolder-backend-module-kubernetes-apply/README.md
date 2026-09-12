@@ -31,6 +31,17 @@ client's generic "apply any resource" API - which does exactly what
 `Content-Type: application/apply-patch+yaml`, which both creates and
 updates).
 
+**A note on what's borrowed vs. original:** this package's scaffolding -
+`package.json`'s `backstage.role`/`pluginId`/`pluginPackage` fields, and
+`module.ts`'s `createBackendModule` + `scaffolderActionsExtensionPoint`
+registration - follows the same structure as Roadie's real module
+(`@backstage-community/plugin-scaffolder-backend-module-kubernetes`
+above), since that's simply the correct, idiomatic way to register a
+scaffolder action module in the new backend system, independent of what
+the action itself does. The action logic - `kubernetesApply.ts` itself,
+the server-side apply, the wait-for-Ready/rollback behavior, and the
+tests - is original.
+
 ## Authentication
 
 `kubernetesApply.ts` calls `KubeConfig.loadFromDefault()`, which honors the
