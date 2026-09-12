@@ -72,13 +72,21 @@ spec:
             name: ${{ parameters.name }}
             location: ${{ parameters.location }}
             sku: ${{ parameters.sku }}
+        # See ../../plugins/scaffolder-backend-module-kubernetes-apply for
+        # why this exists: without it, this step "succeeds" the moment the
+        # claim is written to the cluster, even if Crossplane later fails to
+        # actually provision the Azure Storage Account (e.g. a global
+        # storage-account name collision) - a false positive. This makes
+        # the step wait for the claim to report Ready, and roll back (delete
+        # the claim) if it doesn't within the timeout.
+        waitForReadyTimeoutSeconds: 120
 
   output:
     text:
       - title: Result
         content: |
-          Applied `XStorageAccount/${{ parameters.name }}` to the `demo`
-          namespace. Crossplane is now provisioning the Azure Storage
-          Account - check progress with:
+          `XStorageAccount/${{ parameters.name }}` was applied to the `demo`
+          namespace and confirmed Ready - the Azure Storage Account exists.
+          Inspect it with:
 
-              kubectl get xstorageaccount ${{ parameters.name }} -n demo -w
+              kubectl get xstorageaccount ${{ parameters.name }} -n demo

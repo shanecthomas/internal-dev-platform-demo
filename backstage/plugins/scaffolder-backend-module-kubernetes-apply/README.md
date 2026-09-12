@@ -70,15 +70,52 @@ steps:
 in order. See [`../../templates/xstorageaccount/template.yaml`](../../templates/xstorageaccount/template.yaml)
 for this repo's real usage.
 
+## Waiting for readiness, and rolling back on failure
+
+A bare `kubectl apply` - and this action, by default - only confirms the
+API server accepted the write. It says nothing about whether whatever
+reconciles that object afterwards (Crossplane, in this repo's case)
+actually succeeded. That gap is real: applying an `XStorageAccount` whose
+name collides with someone else's Azure Storage Account (names are
+globally unique across all of Azure) apply cleanly - `SYNCED: True` - and
+then sit at `READY: False` forever while the provider retries a request
+Azure will never accept. Left alone, the scaffolder task reports
+"Completed" immediately, which is a false positive.
+
+Setting `waitForReadyTimeoutSeconds` on a step closes that gap: after
+applying, the action polls every manifest it just applied for a `Ready`
+status condition (the standard Kubernetes/Crossplane convention - no
+XStorageAccount-specific knowledge required) until it's `True`, up to the
+given number of seconds. If any manifest never gets there in time - or if
+a later manifest in the same step fails to apply at all - every manifest
+this step applied is deleted, and the step fails with a real error
+instead of a silent false-positive success.
+
+This is deliberately timeout-based rather than trying to detect "this will
+never succeed" early from a condition's `reason`/`message` (e.g. spotting
+a 409 and failing fast). Providers like `provider-upjet-azure` reuse the
+same reason (`ReconcileError`) for both permanent and transient failures,
+so short-circuiting on it would risk giving up on a resource that would
+have converged on the next retry. A timeout is blunter, but honest.
+
+Rollback is best-effort: a delete failure during rollback is logged as a
+warning rather than thrown, so it can't mask the original failure - but it
+also means rollback isn't guaranteed to leave the cluster clean. Omit
+`waitForReadyTimeoutSeconds` for the original apply-and-return-immediately
+behavior, e.g. for a manifest with no meaningful `Ready` condition (a
+plain `ConfigMap`, say).
+
 ## What this deliberately doesn't do
 
 - **No cluster/context selection.** There's exactly one cluster in this
   demo, so the action always applies to whatever the ambient kubeconfig's
   current context points at. A multi-cluster platform would need to accept
   a cluster reference the way `kubernetes:create-namespace` does.
-- **No drift detection or diffing.** It's a thin apply, not a reconciler -
-  Crossplane's own control loop is what keeps `XStorageAccount` resources
-  converged after the initial apply.
-- **No delete.** Tearing down a claim is a manual `kubectl delete` for now;
-  see the root README's GitOps stretch goal for where that'd eventually
-  live (ArgoCD pruning, rather than a scaffolder delete action).
+- **No drift detection or diffing after the wait completes.** Once a
+  manifest reports Ready, this action is done with it - Crossplane's own
+  control loop is what keeps `XStorageAccount` resources converged from
+  that point on.
+- **No delete outside of rollback.** Tearing down a claim that's already
+  Ready is a manual `kubectl delete` for now; see the root README's
+  GitOps stretch goal for where that'd eventually live (ArgoCD pruning,
+  rather than a scaffolder delete action).
