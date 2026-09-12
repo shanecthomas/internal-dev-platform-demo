@@ -1,0 +1,92 @@
+# The Backstage half of this repo's golden path: a developer fills out this
+# form, and the "steps" below render it straight into the XStorageAccount
+# manifest that crossplane/xrd/definition.yaml defines, then apply it with
+# the kubernetes:apply action (../../plugins/scaffolder-backend-module-kubernetes-apply).
+#
+# No separate skeleton/fetch:template indirection: for a single inline
+# manifest this small, Backstage's built-in Nunjucks templating of the
+# step's own `input.manifest` string does the whole job, so there's no
+# extra file to keep in sync with the XRD's schema.
+#
+# `namespace: demo` is hardcoded here, not a form field - see the root
+# README's "Why this architecture" for why the target namespace, like the
+# resource group on the Crossplane side, is fixed rather than exposed.
+apiVersion: scaffolder.backstage.io/v1beta3
+kind: Template
+metadata:
+  name: xstorageaccount
+  title: Azure Storage Account
+  description: >-
+    Provisions a real Azure Storage Account via Crossplane - no ticket, no
+    manual Azure console work, no standing developer access to Azure.
+  tags:
+    - azure
+    - storage
+    - crossplane
+spec:
+  owner: platform-team
+  type: resource
+  parameters:
+    - title: Storage account details
+      required:
+        - name
+      properties:
+        name:
+          title: Storage account name
+          type: string
+          description: >-
+            Globally-unique Azure storage account name: lowercase letters
+            and numbers only, 3-24 characters, no hyphens. Matches the
+            XStorageAccount XRD's own validation, so a typo is caught here
+            instead of surfacing as a cryptic admission-webhook error.
+          pattern: '^[a-z0-9]{3,24}$'
+          ui:autofocus: true
+        location:
+          title: Azure region
+          type: string
+          default: westus2
+          enum:
+            - westus2
+            - eastus
+            - centralus
+        sku:
+          title: Replication SKU
+          type: string
+          default: Standard
+          enum:
+            - Standard
+            - Premium
+
+  steps:
+    - id: apply
+      name: Apply XStorageAccount claim
+      action: kubernetes:apply
+      input:
+        manifest: |
+          apiVersion: storage.idp-demo.io/v1alpha1
+          kind: XStorageAccount
+          metadata:
+            name: ${{ parameters.name }}
+            namespace: demo
+          spec:
+            name: ${{ parameters.name }}
+            location: ${{ parameters.location }}
+            sku: ${{ parameters.sku }}
+        # See ../../plugins/scaffolder-backend-module-kubernetes-apply for
+        # why this exists: without it, this step "succeeds" the moment the
+        # claim is written to the cluster, even if Crossplane later fails to
+        # actually provision the Azure Storage Account (e.g. a global
+        # storage-account name collision) - a false positive. This makes
+        # the step wait for the claim to report Ready, and roll back (delete
+        # the claim) if it doesn't within the timeout.
+        waitForReadyTimeoutSeconds: 120
+
+  output:
+    text:
+      - title: Result
+        content: |
+          `XStorageAccount/${{ parameters.name }}` was applied to the `demo`
+          namespace and confirmed Ready - the Azure Storage Account exists.
+          Inspect it with:
+
+              kubectl get xstorageaccount ${{ parameters.name }} -n demo
