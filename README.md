@@ -21,9 +21,11 @@ a large half-finished platform.
       that provisions a Storage Account into the scoped resource group.
 - [x] **Backstage scaffolder template** — a form (name/location/sku) that
       renders an `XStorageAccount` manifest and applies it to the cluster
-      via a custom `kubernetes:apply` scaffolder action. See
-      [`backstage/`](./backstage) — including a note there on why that's a
-      small custom action rather than a third-party package.
+      via a custom `kubernetes:apply` scaffolder action. The action waits
+      for Crossplane to confirm the resource actually provisioned (not
+      just that the write was accepted) and rolls back if it doesn't. See
+      [`backstage/`](./backstage) for details, including a note on why
+      this is a small custom action rather than a third-party package.
 - [ ] **(Stretch) GitOps fast-follow** — swap direct `kubectl apply` for
       an ArgoCD-synced flow, reusing the pattern from
       [`gitops-helm-argocd-demo`](https://github.com/shanecthomas/gitops-helm-argocd-demo).
